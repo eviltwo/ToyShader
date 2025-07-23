@@ -1,5 +1,5 @@
 # ToyShader
-An unlit shader that casts shadows on the ground. It has a toy-like atmosphere.
+An Unlit shader for Unity URP that casts shadows on the ground.
 
 [ShadowUnlit.shader](Shaders/ShadowUnlit.shader)
 
