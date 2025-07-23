@@ -2,7 +2,7 @@
     "name": "com.eviltwo.toy-shader",
     "displayName": "ToyShader",
     "version": "1.0.0",
-    "unity": "6000.1.12",
+    "unity": "6000.1",
     "description": "An Unlit shader for Unity URP that casts shadows on the ground.",
     "author": {
         "name": "DAIKI(eviltwo)",
