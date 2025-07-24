@@ -3,6 +3,7 @@ Shader "ToyShader/ShadowUnlit"
     Properties
     {
         [MainTexture] _BaseMap ("Base Map", 2D) = "white" {}
+        [MainColor] _Color ("Main Color", Color) = (1,1,1,1)
     }
     
     SubShader
@@ -39,6 +40,7 @@ Shader "ToyShader/ShadowUnlit"
 
             TEXTURE2D(_BaseMap);
             SAMPLER(sampler_BaseMap);
+            float4 _Color;
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseMap_ST;
@@ -58,6 +60,7 @@ Shader "ToyShader/ShadowUnlit"
             half4 frag (Varyings IN) : SV_Target
             {
                 half4 color = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv);
+                color *= _Color;
                 // shadow
                 half4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
                 half shadowAmount = MainLightRealtimeShadow(shadowCoord);
