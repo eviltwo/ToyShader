@@ -82,6 +82,7 @@ Shader "ToyShader/ShadowUnlit"
 
             #pragma multi_compile_instancing
             
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
             ENDHLSL
         }
