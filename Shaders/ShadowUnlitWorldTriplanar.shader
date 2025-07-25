@@ -35,7 +35,7 @@ Shader "ToyShader/ShadowUnlitWorldTriplanar"
             struct Varyings
             {
                 float4 positionHCS : SV_POSITION;
-                half3 objNormal : TEXCOORD0;
+                half3 normalWS : TEXCOORD0;
                 float3 positionWS : TEXCOORD1;
             };
 
@@ -53,7 +53,8 @@ Shader "ToyShader/ShadowUnlitWorldTriplanar"
                 Varyings OUT;
                 OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
                 // triplanar
-                OUT.objNormal = IN.normal;
+                VertexNormalInputs normals = GetVertexNormalInputs(IN.normal);
+                OUT.normalWS =  normals.normalWS;
                 // shadow
                 VertexPositionInputs positions = GetVertexPositionInputs(IN.positionOS.xyz);
                 OUT.positionWS = positions.positionWS;
@@ -63,7 +64,7 @@ Shader "ToyShader/ShadowUnlitWorldTriplanar"
             half4 frag (Varyings IN) : SV_Target
             {
                 // triplanar
-                half3 blend = abs(IN.objNormal);
+                half3 blend = abs(IN.normalWS);
                 blend /= dot(blend, 1.0);
                 half4 cx = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.positionWS.yz * _Tiling);
                 half4 cy = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.positionWS.xz * _Tiling);
