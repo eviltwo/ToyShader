@@ -1,4 +1,4 @@
-Shader "ToyShader/ShadowUnlit2Color"
+Shader "ToyShader/ShadowUnlit2Colors"
 {
     Properties
     {
