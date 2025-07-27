@@ -1,4 +1,4 @@
-Shader "ToyShader/ShadowUnlit"
+Shader "ToyShader/Lit"
 {
     Properties
     {
@@ -28,6 +28,7 @@ Shader "ToyShader/ShadowUnlit"
             struct Attributes
             {
                 float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
                 float2 uv : TEXCOORD0;
             };
 
@@ -36,6 +37,7 @@ Shader "ToyShader/ShadowUnlit"
                 float4 positionHCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
                 float3 positionWS : TEXCOORD1;
+                float3 normalWS : TEXCOORD2;
             };
 
             TEXTURE2D(_BaseMap);
@@ -54,6 +56,7 @@ Shader "ToyShader/ShadowUnlit"
                 // shadow
                 VertexPositionInputs positions = GetVertexPositionInputs(IN.positionOS.xyz);
                 OUT.positionWS = positions.positionWS;
+                OUT.normalWS = TransformObjectToWorldNormal(IN.normalOS);
                 return OUT;
             }
 
@@ -65,7 +68,12 @@ Shader "ToyShader/ShadowUnlit"
                 half4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
                 half shadowAmount = MainLightRealtimeShadow(shadowCoord);
                 half shadowFade = GetMainLightShadowFade(IN.positionWS);
-                return color * lerp(shadowAmount, 1, shadowFade);
+                half lighting = step(0.95, lerp(shadowAmount, 1, shadowFade));
+                Light light = GetMainLight();
+                half surfaceShadow = clamp(step(0.1, dot(IN.normalWS, light.direction)), 0, 1);
+                lighting = min(lighting, surfaceShadow);
+                lighting = max(lighting, 1 - _MainLightShadowParams.x);
+                return color * lighting;
             }
             
             ENDHLSL
