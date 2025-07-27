@@ -1,11 +1,9 @@
 # ToyShader
-An Unlit shader for Unity URP that casts shadows on the ground.
+This is a shader that renders solid-colored shadows on an Unlit surface, giving it a flat appearance. It works with Unity 6 URP.
 
-[ShadowUnlit.shader](Shaders/ShadowUnlit.shader)
+<img width="965" height="544" alt="image" src="https://github.com/user-attachments/assets/c3ed4c77-9e8d-4cc7-af47-cf70dcad64cd" />
 
-<img width="963" height="540" alt="image" src="https://github.com/user-attachments/assets/f8ee25f1-fb1e-4cbd-ac40-bb4d897f0930" />
-
-The models from [Synty](https://assetstore.unity.com/packages/3d/environments/fantasy/polygon-knights-low-poly-3d-art-by-synty-83694) were used for the screenshots.
+The models from [Synty](https://assetstore.unity.com/publishers/5217) were used for the screenshots.
 
 # Import via UPM
 ```
