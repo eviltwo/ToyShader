@@ -1,4 +1,4 @@
-Shader "ToyShader/Particles/ShadowUnlit"
+Shader "ToyShader/Particles/Lit"
 {
     Properties
     {
