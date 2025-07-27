@@ -17,13 +17,12 @@ Shader "ToyShader/Lit"
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_instancing
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_SCREEN
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile _ _SHADOWS_SOFT
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Utils/SHADOW.hlsl"
             
             struct Attributes
             {
@@ -64,16 +63,8 @@ Shader "ToyShader/Lit"
             {
                 half4 color = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv);
                 color *= _Color;
-                // shadow
-                half4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
-                half shadowAmount = MainLightRealtimeShadow(shadowCoord);
-                half shadowFade = GetMainLightShadowFade(IN.positionWS);
-                half lighting = step(0.95, lerp(shadowAmount, 1, shadowFade));
-                Light light = GetMainLight();
-                half surfaceShadow = clamp(step(0.1, dot(IN.normalWS, light.direction)), 0, 1);
-                lighting = min(lighting, surfaceShadow);
-                lighting = max(lighting, 1 - _MainLightShadowParams.x);
-                return color * lighting;
+                color *= CalculateShadow(IN.positionWS, IN.normalWS);
+                return color;
             }
             
             ENDHLSL
