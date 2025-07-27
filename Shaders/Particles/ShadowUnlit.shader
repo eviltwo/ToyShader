@@ -24,10 +24,12 @@ Shader "ToyShader/Particles/ShadowUnlit"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "../Utils/SHADOW.hlsl"
             
             struct Attributes
             {
                 float4 positionOS : POSITION;
+                half3 normalOS : NORMAL;
                 float2 uv : TEXCOORD0;
                 float4 color : COLOR;
             };
@@ -35,9 +37,10 @@ Shader "ToyShader/Particles/ShadowUnlit"
             struct Varyings
             {
                 float4 positionHCS : SV_POSITION;
+                float4 color : COLOR;
                 float2 uv : TEXCOORD0;
                 float3 positionWS : TEXCOORD1;
-                float4 color : COLOR;
+                half3 normalWS : TEXCOORD2;
             };
 
             TEXTURE2D(_BaseMap);
@@ -55,8 +58,8 @@ Shader "ToyShader/Particles/ShadowUnlit"
                 OUT.uv = TRANSFORM_TEX(IN.uv, _BaseMap);
                 OUT.color = IN.color;
                 // shadow
-                VertexPositionInputs positions = GetVertexPositionInputs(IN.positionOS.xyz);
-                OUT.positionWS = positions.positionWS;
+                OUT.positionWS = TransformObjectToWorld(IN.positionOS);
+                OUT.normalWS =  TransformObjectToWorldNormal(IN.normalOS);
                 return OUT;
             }
 
@@ -65,32 +68,13 @@ Shader "ToyShader/Particles/ShadowUnlit"
                 half4 color = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv);
                 color *= IN.color;
                 color *= _Color;
-                // shadow
-                half4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
-                half shadowAmount = MainLightRealtimeShadow(shadowCoord);
-                half shadowFade = GetMainLightShadowFade(IN.positionWS);
-                half shadow = lerp(shadowAmount, 1, shadowFade);
-                shadow = max(step(0.5, shadow), (1 - _MainLightShadowParams.x));
-                return color * shadow;
+                color *= CalculateShadow(IN.positionWS, IN.normalWS);
+                return  color;
             }
             
             ENDHLSL
         }
 
-        Pass
-        {
-            Name "ShadowCaster"
-            Tags { "LightMode"="ShadowCaster" }
-            
-            HLSLPROGRAM
-            #pragma vertex ShadowPassVertex
-            #pragma fragment ShadowPassFragment
-            #pragma multi_compile_shadowcaster
-            #pragma multi_compile_instancing
-            
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
-            ENDHLSL
-        }
+        UsePass "ToyShader/Lit/ShadowCaster"
     }
 }

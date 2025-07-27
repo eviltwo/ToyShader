@@ -27,7 +27,7 @@ Shader "ToyShader/Lit"
             struct Attributes
             {
                 float4 positionOS : POSITION;
-                float3 normalOS : NORMAL;
+                half3 normalOS : NORMAL;
                 float2 uv : TEXCOORD0;
             };
 
@@ -36,7 +36,7 @@ Shader "ToyShader/Lit"
                 float4 positionHCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
                 float3 positionWS : TEXCOORD1;
-                float3 normalWS : TEXCOORD2;
+                half3 normalWS : TEXCOORD2;
             };
 
             TEXTURE2D(_BaseMap);
@@ -53,8 +53,7 @@ Shader "ToyShader/Lit"
                 OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
                 OUT.uv = TRANSFORM_TEX(IN.uv, _BaseMap);
                 // shadow
-                VertexPositionInputs positions = GetVertexPositionInputs(IN.positionOS.xyz);
-                OUT.positionWS = positions.positionWS;
+                OUT.positionWS = TransformObjectToWorld(IN.positionOS);
                 OUT.normalWS = TransformObjectToWorldNormal(IN.normalOS);
                 return OUT;
             }

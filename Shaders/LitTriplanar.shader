@@ -1,9 +1,10 @@
-Shader "ToyShader/ShadowUnlitWorldTriplanar"
+Shader "ToyShader/LitTriplanar"
 {
     Properties
     {
         [MainTexture] _BaseMap ("Base Map", 2D) = "white" {}
         [MainColor] _Color ("Main Color", Color) = (1,1,1,1)
+        [KeywordEnum(OBJECT, WORLD)] _COORD_SPACE ("Space", Float) = 0
         _Tiling ("Tiling", Float) = 1.0
     }
     
@@ -23,20 +24,28 @@ Shader "ToyShader/ShadowUnlitWorldTriplanar"
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile _ _SHADOWS_SOFT
 
+            #pragma multi_compile _COORD_SPACE_OBJECT _COORD_SPACE_WORLD
+
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Utils/SHADOW.hlsl"
             
             struct Attributes
             {
                 float4 positionOS : POSITION;
-                half3 normal : NORMAL;
+                half3 normalOS : NORMAL;
             };
 
             struct Varyings
             {
                 float4 positionHCS : SV_POSITION;
-                half3 normalWS : TEXCOORD0;
-                float3 positionWS : TEXCOORD1;
+                float3 positionWS : TEXCOORD;
+                half3 normalWS : TEXCOORD1;
+
+                #ifdef _COORD_SPACE_OBJECT
+                    half3 normalOS : TEXCOORD2;
+                    half3 coords : TEXCOORD3;
+                #endif
             };
 
             TEXTURE2D(_BaseMap);
@@ -52,49 +61,53 @@ Shader "ToyShader/ShadowUnlitWorldTriplanar"
             {
                 Varyings OUT;
                 OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
+                
                 // triplanar
-                VertexNormalInputs normals = GetVertexNormalInputs(IN.normal);
-                OUT.normalWS =  normals.normalWS;
+                #ifdef _COORD_SPACE_OBJECT
+                    OUT.normalOS = IN.normalOS;
+                    OUT.coords = IN.positionOS.xyz * _Tiling;
+                #endif
+                
                 // shadow
-                VertexPositionInputs positions = GetVertexPositionInputs(IN.positionOS.xyz);
-                OUT.positionWS = positions.positionWS;
+                OUT.positionWS = TransformObjectToWorld(IN.positionOS);
+                OUT.normalWS = TransformObjectToWorldNormal(IN.normalOS);
                 return OUT;
             }
 
             half4 frag (Varyings IN) : SV_Target
             {
                 // triplanar
-                half3 blend = abs(IN.normalWS);
+                half3 normal;
+                #ifdef _COORD_SPACE_OBJECT
+                    normal = abs(IN.normalOS);
+                #else
+                    normal = abs(IN.normalWS);
+                #endif
+
+                half3 blend = abs(normal);
                 blend /= dot(blend, 1.0);
-                half4 cx = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.positionWS.yz * _Tiling);
-                half4 cy = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.positionWS.xz * _Tiling);
-                half4 cz = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.positionWS.xy * _Tiling);
+                half3 coords;
+                #ifdef _COORD_SPACE_OBJECT
+                    coords = IN.coords;
+                #else
+                    coords = IN.positionWS;
+                #endif
+                
+                half4 cx = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, coords.yz);
+                half4 cy = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, coords.xz);
+                half4 cz = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, coords.xy);
                 half4 color = cx * blend.x + cy * blend.y + cz * blend.z;
                 color *= _Color;
+                
                 // shadow
-                half4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
-                half shadowAmount = MainLightRealtimeShadow(shadowCoord);
-                half shadowFade = GetMainLightShadowFade(IN.positionWS);
-                return color * lerp(shadowAmount, 1, shadowFade);
+                color *= CalculateShadow(IN.positionWS, IN.normalWS);
+                
+                return color;
             }
             
             ENDHLSL
         }
 
-        Pass
-        {
-            Name "ShadowCaster"
-            Tags { "LightMode"="ShadowCaster" }
-            
-            HLSLPROGRAM
-            #pragma vertex ShadowPassVertex
-            #pragma fragment ShadowPassFragment
-
-            #pragma multi_compile_instancing
-            
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
-            ENDHLSL
-        }
+        UsePass "ToyShader/Lit/ShadowCaster"
     }
 }
