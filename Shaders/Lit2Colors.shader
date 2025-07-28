@@ -1,4 +1,4 @@
-Shader "ToyShader/2Colors"
+Shader "ToyShader/Lit2Colors"
 {
     Properties
     {
@@ -18,9 +18,7 @@ Shader "ToyShader/2Colors"
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_instancing
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_SCREEN
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile _ _SHADOWS_SOFT
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -43,10 +41,6 @@ Shader "ToyShader/2Colors"
             float4 _TopColor;
             float4 _Color;
             float _TopAmount;
-
-            CBUFFER_START(UnityPerMaterial)
-                float4 _BaseMap_ST;
-            CBUFFER_END
 
             Varyings vert (Attributes IN)
             {
